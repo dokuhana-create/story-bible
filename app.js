@@ -422,7 +422,9 @@
     var text = noteText.value.trim();
     if (!text) { dlg.close(); return; }
     var about = dlg.dataset.about;
-    var note = about && norm(text).indexOf(norm(about)) < 0 ? about + ": " + text : text;
+    // (the entry's name first, with a dash: the phone names the note's file after its first words, and OneDrive
+    // refuses a file whose name has a colon)
+    var note = about && norm(text).indexOf(norm(about)) < 0 ? about + " — " + text : text;
     setPref("draft", "");
     dlg.close();
     location.href = "shortcuts://run-shortcut?name=" + encodeURIComponent(pref("shortcut", "To my bible")) +

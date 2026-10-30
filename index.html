@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Story Bible</title>
+<meta name="description" content="Your story bible on your phone. Your bible stays on this phone; nothing is sent anywhere.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Story Bible">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f3f0f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1b1613" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<main id="app" aria-live="polite"></main>
+<dialog id="note" aria-labelledby="note-h">
+  <form method="dialog" id="note-form">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="row">
+      <h2 id="note-h">A note for the Inbox</h2>
+      <span class="spacer"></span>
+      <button type="button" class="plain" id="note-cancel">Cancel</button>
+    </div>
+    <label for="note-text" id="note-about" class="muted"></label>
+    <textarea id="note-text" rows="6"></textarea>
+    <button type="submit" class="primary" id="note-send">Send to the Inbox</button>
+    <p class="muted small" id="note-help"></p>
+  </form>
+</dialog>
+<input type="file" id="file" accept=".json,application/json" hidden>
+<script src="app.js"></script>
+</body>
+</html>

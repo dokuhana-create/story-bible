@@ -165,6 +165,27 @@
       bible ? el("button", { "class": "soft", type: "button", on: { click: function () { go("#/"); } } }, ["Back"]) : null];
   }
 
+  /* ---------- where you left off: the scene last written in, as the laptop knew it ---------- */
+  function leftOffCard() {
+    var n = bible.now;
+    if (!n || !n.title || pref("leftOffHidden", 0) === bible.made) return null;
+    var head = (n.chapter !== null && n.chapter !== undefined ? "Ch " + n.chapter + " · " : "") + n.title;
+    var kids = [
+      el("div", { "class": "row" }, [
+        el("span", { "class": "cap", text: "Where you left off" + (n.t ? " · " + when(n.t) : "") }),
+        el("span", { "class": "spacer" }),
+        el("button", { "class": "plain", type: "button", "aria-label": "Hide until the next update",
+          on: { click: function () { setPref("leftOffHidden", bible.made); render(); } } }, ["✕"])]),
+      el("div", { "class": "serif now-title", text: head + (n.status ? "  " : "") },
+        n.status ? [el("span", { "class": "small muted", text: n.status })] : [])];
+    if (n.text) kids.push(el("p", { "class": "now-text muted", text: n.text }));
+    var names = (n.names || []).filter(function (id) { return byId[id]; });
+    if (names.length) kids.push(el("div", { "class": "now-names" }, names.map(function (id) {
+      return el("a", { href: "#/e/" + encodeURIComponent(id), text: byId[id].t });
+    })));
+    return el("section", { "class": "card now", "aria-label": "Where you left off" }, kids);
+  }
+
   function screenHome() {
     app.className = "";
     var q = el("input", { type: "search", id: "q", placeholder: "Search names, places, anything", autocomplete: "off",
@@ -194,6 +215,8 @@
       el("span", { "class": "mark", "aria-hidden": "true", text: "\u2756" }), el("span", { "class": "name", text: "Maps" })]));
     if (bible.outline) tiles.push(el("a", { "class": "tile", href: "#/outline" }, [
       el("span", { "class": "mark", "aria-hidden": "true", text: "\u2767" }), el("span", { "class": "name", text: "Outline" })]));
+    var left = leftOffCard();
+    if (left) body.appendChild(left);
     body.appendChild(el("div", { "class": "tiles" }, tiles));
     var recent = pref("recent", []).filter(function (id) { return byId[id]; }).slice(0, 6);
     if (recent.length) {

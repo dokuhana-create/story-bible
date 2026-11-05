@@ -111,3 +111,11 @@ dialog::backdrop { background: rgba(10, 8, 6, .45); }
   main > * { animation: rise .22s ease-out both; }
   @keyframes rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 }
+/* where you left off (home screen) */
+.now { display: flex; flex-direction: column; gap: 6px; padding: 10px 16px 14px; }
+.now .row .cap { margin-top: 0; }
+.now .plain { min-height: 36px; min-width: 36px; margin-right: -8px; }
+.now-title { font-size: 19px; line-height: 1.3; }
+.now-title .small { font-family: var(--sans); font-weight: 400; }
+.now-text { margin: 0; font-size: 14px; line-height: 1.45; }
+.now-names { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 15px; }

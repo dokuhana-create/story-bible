@@ -1,6 +1,6 @@
 /* Keeps the app's own files on the phone so it opens without a connection. Your bible is not here: it is in the
    app's storage on the phone, put there by Load my bible. A new version of the app replaces these files. */
-var CACHE = "story-bible-app-3";
+var CACHE = "story-bible-app-5";
 var FILES = ["./", "index.html", "app.css", "app.js", "manifest.webmanifest", "icon-180.png", "icon-192.png",
   "icon-512.png", "book-light.png", "book-dark.png"];
 

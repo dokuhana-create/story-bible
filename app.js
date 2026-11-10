@@ -4,6 +4,7 @@
 (function () {
   "use strict";
   var APP = "story-bible-pocket";
+  var VERSION = 5, BUILT = "9 November 2026";        /* (the same number ends sw.js's CACHE name) */
   var MARKS = { "Characters": "\u25cf", "Locations": "\u25b2", "Magic & Rules": "\u2726", "Factions": "\u25a0",
     "Items": "\u25c6", "Timeline": "\u25ac", "Never Contradict": "\u25cb", "Glossary": "\u2022" };
   var app = document.getElementById("app");
@@ -111,9 +112,15 @@
     r.readAsText(f);
   });
   function use(data) {
-    bible = data; byId = {}; anchors = data.anchors || {};
-    data.entries.forEach(function (e) { byId[e.id] = e; });
+    bible = data; byId = {}; anchors = data.anchors || {}; markedCats = {};
+    data.entries.forEach(function (e) { byId[e.id] = e; if (isMain(e)) markedCats[e.c] = true; });
   }
+
+  /* ---------- Main only: as on the laptop, the marked stay in view; in a category with marks, the rest wait for a
+     search. A category with nothing marked shows in full, and so does a file from before the marks came along. ---------- */
+  var markedCats = {};
+  function isMain(e) { return e.i === "main" || e.i === "major"; }
+  function outOfView(e) { return pref("mainOnly", true) !== false && markedCats[e.c] && !isMain(e) && !e.pin; }
 
   /* ---------- search: the name itself, then names that start with it, other names, then mentions ---------- */
   function plain(e) {
@@ -205,7 +212,7 @@
     }
     q.addEventListener("input", fill);
     var counts = {};
-    bible.entries.forEach(function (e) { counts[e.c] = (counts[e.c] || 0) + 1; });
+    bible.entries.forEach(function (e) { if (!outOfView(e)) counts[e.c] = (counts[e.c] || 0) + 1; });
     var tiles = bible.cats.map(function (c) {
       return el("a", { "class": "tile", href: "#/c/" + encodeURIComponent(c) }, [
         el("span", { "class": "mark", "aria-hidden": "true", text: mark(c) }),
@@ -246,13 +253,25 @@
   }
   function back() { if (history.length > 1) history.back(); else go("#/"); }
 
-  function screenCategory(cat) {
+  function screenCategory(cat, showAll) {
     app.className = "";
     var list = bible.entries.filter(function (e) { return e.c === cat; })
       .sort(function (a, b) { return a.t.localeCompare(b.t); });
-    return [topBar(""), el("h1", {}, [el("span", { "aria-hidden": "true", style: "color:var(--link);font-family:var(--sans);font-size:22px;margin-right:8px", text: mark(cat) }), cat]),
-      list.length ? el("div", { "class": "list" }, list.map(function (e) { return itemRow(e, (e.a || []).length ? "also " + e.a.join(", ") : ""); }))
-        : el("p", { "class": "empty", text: "No " + cat + " yet." })];
+    function rows(some) {
+      return el("div", { "class": "list" }, some.map(function (e) { return itemRow(e, (e.a || []).length ? "also " + e.a.join(", ") : ""); }));
+    }
+    var head = [topBar(""), el("h1", {}, [el("span", { "aria-hidden": "true", style: "color:var(--link);font-family:var(--sans);font-size:22px;margin-right:8px", text: mark(cat) }), cat])];
+    var inView = list.filter(function (e) { return !outOfView(e); });
+    if (showAll || inView.length === list.length) {
+      return head.concat([list.length ? rows(list) : el("p", { "class": "empty", text: "No " + cat + " yet." })]);
+    }
+    [["Main", function (e) { return e.i === "main"; }], ["Major", function (e) { return e.i === "major"; }],
+      ["Pinned", function (e) { return !isMain(e); }]].forEach(function (group) {
+      var some = inView.filter(group[1]);
+      if (some.length) head.push(el("div", { "class": "cap", text: group[0] }), rows(some));
+    });
+    head.push(el("button", { "class": "soft", type: "button", on: { click: function () { go("#/c/" + encodeURIComponent(cat) + "/all"); } } }, ["Show all " + list.length]));
+    return head;
   }
 
   function bodyNodes(e) {
@@ -416,6 +435,8 @@
     sc.addEventListener("change", function () { setPref("shortcut", sc.value.trim() || "To my bible"); toast("Saved"); });
     return [topBar(""), el("h1", { text: "Settings" })]
       .concat(seg("Theme", "theme", [["auto", "Auto"], ["light", "Pearl"], ["dark", "Dark"]], "auto", applyTheme))
+      .concat(Object.keys(markedCats).length ? seg("Main only", "mainOnly", [[true, "On"], [false, "Off"]], true).concat([
+        el("p", { "class": "muted small", text: "On: a category you have marked opens on its Main and Major entries. Search always covers everything." })]) : [])
       .concat([el("div", { "class": "cap" }, [el("label", { "for": "sc", text: "Your Shortcut for notes" })]), sc,
         el("p", { "class": "muted small", text: "Notes go to this Shortcut, which saves them in the Story Bible inbox folder. In it, set Ask for Input\u2019s Default Answer to Shortcut Input, so the note comes in already written." }),
         el("div", { "class": "cap", text: "Your bible on this phone" }),
@@ -424,7 +445,9 @@
         el("button", { "class": "soft", type: "button", on: { click: function () {
           if (!confirm("Remove your bible from this phone? The laptop and OneDrive keep theirs.")) return;
           dbPut("bible", undefined).then(function () { bible = null; byId = {}; setPref("recent", []); go("#/"); render(); });
-        } } }, ["Remove it from this phone"])]);
+        } } }, ["Remove it from this phone"]),
+        el("div", { "class": "cap", text: "This app" }),
+        el("p", { "class": "muted", text: "Version " + VERSION + " \u00b7 " + BUILT })]);
   }
 
   /* ---------- a quick note, through your Shortcut ---------- */
@@ -459,7 +482,7 @@
     var h = location.hash.replace(/^#\/?/, ""), parts = h.split("/"), screen;
     if (!bible || parts[0] === "load") screen = screenWelcome(!!bible);
     else if (parts[0] === "e") screen = screenEntry(decodeURIComponent(parts[1] || ""));
-    else if (parts[0] === "c") screen = screenCategory(decodeURIComponent(parts[1] || ""));
+    else if (parts[0] === "c") screen = screenCategory(decodeURIComponent(parts[1] || ""), parts[2] === "all");
     else if (parts[0] === "maps") screen = screenMaps();
     else if (parts[0] === "outline") screen = screenOutline();
     else if (parts[0] === "settings") screen = screenSettings();
